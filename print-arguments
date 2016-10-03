@@ -1,0 +1,6 @@
+#!/usr/bin/env emacs -script
+;;; -*- lexical-binding: t -*-
+
+(dolist (i command-line-args-left)
+  (princ i)
+  (terpri))
