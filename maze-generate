@@ -1,5 +1,8 @@
 #!/usr/bin/env emacs -script
 ;;; -*- lexical-binding: t -*-
+;;> Simple maze generator.
+;;> Example: ./maze-generate 20 20
+
 (require 'cl-lib)
 ;;(setq debug-on-error t)
 
@@ -108,6 +111,9 @@
       (setq p (to-visit maze row col)))))
 
 (defun generate (rows cols)
+  (setq max-specpdl-size (* max-specpdl-size 2))
+  (setq max-lisp-eval-depth (* max-lisp-eval-depth 2))
+  
   (let ((m (new-maze rows cols)))
     (dig-maze m (random rows) (random cols))
     (print-maze m)))
