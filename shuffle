@@ -1,0 +1,21 @@
+#!/usr/bin/env emacs -script
+;;; -*- lexical-binding: t -*-
+;;> Read lines from stdin, shuffle the lines and write to stdout.
+
+(defun shuffle (lst)
+  (sort lst (lambda (a b) (= 1 (random 2)))))
+
+(defun main ()
+  (let (data)
+
+    (condition-case nil
+        (let (line)
+          (while (setq line (read-from-minibuffer ""))
+            (push line data)))
+      (error nil))
+
+    (dolist (line (shuffle data))
+      (princ line)
+      (terpri))))
+
+(main)
