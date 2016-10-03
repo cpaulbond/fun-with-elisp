@@ -18,7 +18,7 @@
   (let ((m (make-maze :rows rows :cols cols :data (make-vector (* rows cols) nil))))
     
     (dotimes (r rows)
-      (dotimes (c rows)
+      (dotimes (c cols)
         (setf (maze-ref m r c) (copy-sequence '(wall ceiling)))))
 
     (dotimes (r rows)
@@ -54,9 +54,27 @@
     (terpri))
 
   (dotimes (c (1- (maze-cols maze)))
-    (princ (if (maze-is-set maze (1- (maze-cols maze)) c 'ceiling) "+--" "+  ")))
+    (princ (if (maze-is-set maze (maze-cols maze) c 'ceiling) "+--" "+  ")))
   (princ "+")
   (terpri))
+
+(defun dump-maze (maze)
+  (princ "     ")
+  (dotimes (c (maze-cols maze))
+    (princ (format "%3d " c)))
+  (terpri)
+
+  (dotimes (r (maze-rows maze))
+
+    (princ (format "%3d: " r))
+
+    (dotimes (c (maze-cols maze))
+      (princ (if (maze-is-set maze r c 'ceiling) "c" "."))
+      (princ (if (maze-is-set maze r c 'wall) "w" "."))
+      (princ (if (maze-is-set maze r c 'visited) "v" "."))
+      (princ " "))
+
+    (terpri)))
 
 (defun shuffle (lst)
   (sort lst (lambda (a b) (= 1 (random 2)))))
@@ -89,11 +107,13 @@
         (dig-maze maze r c))
       (setq p (to-visit maze row col)))))
 
-(let* ((rows 10)
-       (cols 10)
-       (m (new-maze rows cols)))
-  (dig-maze m (random rows) (random cols))
-  (print-maze m))
+(defun generate (rows cols)
+  (let ((m (new-maze rows cols)))
+    (dig-maze m (random rows) (random cols))
+    (print-maze m)))
+
+(generate (string-to-number (elt command-line-args-left 0))
+          (string-to-number (elt command-line-args-left 1)))
 
 
 
