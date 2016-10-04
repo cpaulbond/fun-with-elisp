@@ -50,17 +50,17 @@
   (dotimes (r (1- (maze-rows maze)))
 
     (dotimes (c (1- (maze-cols maze)))
-      (princ (if (maze-is-set maze r c 'ceiling) "+--" "+  ")))
+      (princ (if (maze-is-set maze r c 'ceiling) "+---" "+   ")))
     (princ "+")
     (terpri)
 
     (dotimes (c (1- (maze-cols maze)))
-      (princ (if (maze-is-set maze r c 'wall) "|  " "   ")))
+      (princ (if (maze-is-set maze r c 'wall) "|   " "    ")))
     (princ "|")
     (terpri))
 
   (dotimes (c (1- (maze-cols maze)))
-    (princ (if (maze-is-set maze (1- (maze-rows maze)) c 'ceiling) "+--" "+  ")))
+    (princ (if (maze-is-set maze (1- (maze-rows maze)) c 'ceiling) "+---" "+   ")))
   (princ "+")
   (terpri))
 
@@ -119,7 +119,6 @@
   
   (let ((m (new-maze rows cols)))
     (dig-maze m (random rows) (random cols))
-    (dump-maze m)
     (print-maze m)))
 
 (generate (string-to-number (elt command-line-args-left 0))
