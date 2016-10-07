@@ -4,3 +4,4 @@
 (dolist (i command-line-args-left)
   (princ i)
   (terpri))
+(setq command-line-args-left nil)
