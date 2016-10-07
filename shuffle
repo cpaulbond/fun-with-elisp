@@ -8,11 +8,9 @@
 (defun main ()
   (let (data)
 
-    (condition-case nil
-        (let (line)
-          (while (setq line (read-from-minibuffer ""))
-            (push line data)))
-      (error nil))
+    (let (line)
+      (while (setq line (condition-case nil (read-from-minibuffer "") (error nil)))
+        (push line data)))
 
     (dolist (line (shuffle data))
       (princ line)
