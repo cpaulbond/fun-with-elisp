@@ -1,11 +1,4 @@
-#!/usr/bin/env emacs -script
-;;; -*- lexical-binding: t -*-
-;;> Simple maze generator.
-;;> Example: ./maze-generate 20 20
-;; This version has everything in it.  Will work on the solver next.
-
 (require 'cl-lib)
-;;(setq debug-on-error t)
 
 (cl-defstruct maze rows cols data)
 
@@ -48,6 +41,7 @@
   (setf (maze-ref maze r c) (delete v (maze-ref maze r c))))
 
 (defun print-maze (maze)
+  (princ (format "rows=%d,cols=%d\n" (1- (maze-rows maze)) (1- (maze-cols maze))))
   (dotimes (r (1- (maze-rows maze)))
 
     (dotimes (c (1- (maze-cols maze)))
@@ -105,6 +99,9 @@
       (maze-unset maze r1 c1 'ceiling))))  ; down
       
 (defun dig-maze-recursive (maze row col)
+  (setq max-specpdl-size (* max-specpdl-size 2))
+  (setq max-lisp-eval-depth (* max-lisp-eval-depth 2))
+  
   (maze-set maze row col 'visited)
   (let ((p (to-visit maze row col)))
     (while p
@@ -137,21 +134,52 @@
           (setq backup (shuffle backup))
           (setq run 0))))))
 
-(defun generate (rows cols)
-  (setq max-specpdl-size (* max-specpdl-size 2))
-  (setq max-lisp-eval-depth (* max-lisp-eval-depth 2))
-  
-  (let ((m (new-maze rows cols)))
+(defun generate ()
+  (let* ((rows (string-to-number (elt command-line-args-left 0)))
+         (cols (string-to-number (elt command-line-args-left 1)))
+         (m (new-maze rows cols)))
     ;;(dig-maze-recursive m (random rows) (random cols))
     (dig-maze-non-recursive m (random rows) (random cols))
     (print-maze m)))
 
-(generate (string-to-number (elt command-line-args-left 0))
-          (string-to-number (elt command-line-args-left 1)))
+(defun ceilings (line)
+  (let (rtn
+        (i 1))
+    (while (< i (length line))
+      (push (eq ?- (elt line i)) rtn)
+      (setq i (+ i 4)))
+    (nreverse rtn)))
 
+(defun walls (line)
+  (let (rtn
+        (i 0))
+    (while (< i (length line))
+      (push (eq ?| (elt line i)) rtn)
+      (setq i (+ i 4)))
+    (nreverse rtn)))
 
+(defun parse-maze (file-name)
+  (let ((rtn)
+        (lines (with-temp-buffer
+                 (insert-file-contents-literally file-name)
+                 (split-string (buffer-string) "\n" t))))
+    (while lines
+      (push (ceilings (pop lines)) rtn)
+      (push (walls (pop lines)) rtn))
+    (nreverse rtn)))
 
+(defun read-maze (file-name)
+  (let* ((raw (parse-maze file-name))
+         (rows (- (length raw) 2))
+         (cols (/ (length (car raw)) 2))
+         (maze (new-maze rows cols)))
+    (princ (format "rows=%d,cols=%d\n" rows cols))
+    maze))
+  
 
+(defun solve ()
+  (let ((maze (read-maze (elt command-line-args-left 0))))
+    (princ maze)))
 
-      
          
+(provide 'maze)
