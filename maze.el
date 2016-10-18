@@ -134,10 +134,8 @@
           (setq backup (shuffle backup))
           (setq run 0))))))
 
-(defun generate ()
-  (let* ((rows (string-to-number (elt command-line-args-left 0)))
-         (cols (string-to-number (elt command-line-args-left 1)))
-         (m (new-maze rows cols)))
+(defun generate (rows cols)
+  (let* ((m (new-maze rows cols)))
     ;;(dig-maze-recursive m (random rows) (random cols))
     (dig-maze-non-recursive m (random rows) (random cols))
     (print-maze m)))
@@ -163,6 +161,7 @@
         (lines (with-temp-buffer
                  (insert-file-contents-literally file-name)
                  (split-string (buffer-string) "\n" t))))
+    (princ (format "DBG: %s\n" (pop lines)))
     (while lines
       (push (ceilings (pop lines)) rtn)
       (push (walls (pop lines)) rtn))
@@ -170,15 +169,15 @@
 
 (defun read-maze (file-name)
   (let* ((raw (parse-maze file-name))
-         (rows (- (length raw) 2))
-         (cols (/ (length (car raw)) 2))
+         (rows (1- (/ (length raw) 2)))
+         (cols (length (car raw)))
          (maze (new-maze rows cols)))
-    (princ (format "rows=%d,cols=%d\n" rows cols))
+    (princ (format "DBG: read-maze rows=%d,cols=%d\n" rows cols))
     maze))
   
 
-(defun solve ()
-  (let ((maze (read-maze (elt command-line-args-left 0))))
+(defun solve (file-name)
+  (let ((maze (read-maze file-name)))
     (princ maze)))
 
          

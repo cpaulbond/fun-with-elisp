@@ -7,4 +7,5 @@
 (require 'cl-lib)
 (require 'maze)
 
-(generate)
+(generate (string-to-number (elt command-line-args-left 0))
+          (string-to-number (elt command-line-args-left 1)))
