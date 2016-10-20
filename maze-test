@@ -18,7 +18,7 @@
 
 
 (let* ((rows 12)
-       (cols 28)
+       (cols 24)
        (file-name "maze.tmp")
        (a (new-maze rows cols))
        b)
@@ -31,6 +31,7 @@
   (clear-maze-visited a)
   (setq b (read-maze file-name))
 
+  (princ (format "(equal a b) %s\n" (equal a b)))
   (dump-maze a)
   (dump-maze b))
 
