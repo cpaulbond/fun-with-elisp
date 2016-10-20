@@ -1,9 +1,5 @@
 (require 'cl-lib)
 
-(defun puts (&rest args)
-  (if args
-      (princ (apply #'format args))))
-
 (cl-defstruct maze rows cols data)
 
 (defmacro maze-pt (w r c)
@@ -63,33 +59,6 @@
   (princ "+")
   (terpri))
 
-(defun dump-maze (maze)
-  (princ "     ")
-  (dotimes (c (maze-cols maze))
-    (princ (format "%4d " c)))
-  (terpri)
-
-  (dotimes (r (maze-rows maze))
-
-    (princ (format "%3d: " r))
-
-    (dotimes (c (maze-cols maze))
-      (princ (if (maze-is-set maze r c 'ceiling) "c" "."))
-      (princ (if (maze-is-set maze r c 'wall) "w" "."))
-      (princ (if (maze-is-set maze r c 'visited) "v" "."))
-      (princ (if (maze-is-set maze r c 'solution) "s" "."))
-      (princ " "))
-
-    (terpri)))
-
-(defun clear-maze-visited (m)
-  (let ((rows (1- (maze-rows m)))
-        (cols (1- (maze-cols m))))
-
-    (dotimes (r rows)
-      (dotimes (c cols)
-        (maze-unset m r c 'visited)))))
-
 (defun shuffle (lst)
   (sort lst (lambda (a b) (= 1 (random 2)))))
 
@@ -111,20 +80,7 @@
         (maze-unset maze r2 c2 'ceiling)   ; up
       (maze-unset maze r1 c1 'ceiling))))  ; down
       
-(defun dig-maze-recursive (maze row col)
-  (setq max-specpdl-size (* max-specpdl-size 2))
-  (setq max-lisp-eval-depth (* max-lisp-eval-depth 2))
-  
-  (maze-set maze row col 'visited)
-  (let ((p (shuffle (to-visit maze row col))))
-    (while p
-      (let ((r (caar p))
-            (c (cdar p)))
-        (make-passage maze row col r c)
-        (dig-maze-recursive maze r c))
-      (setq p (shuffle (to-visit maze row col))))))
-
-(defun dig-maze-non-recursive (maze row col)
+(defun dig-maze (maze row col)
   (let (backup
         (run 0))
     (maze-set maze row col 'visited)
@@ -149,8 +105,7 @@
 
 (defun generate (rows cols)
   (let* ((m (new-maze rows cols)))
-    ;;(dig-maze-recursive m (random rows) (random cols))
-    (dig-maze-non-recursive m (random rows) (random cols))
+    (dig-maze m (random rows) (random cols))
     (print-maze m)))
 
 (defun parse-ceilings (line)
@@ -223,10 +178,7 @@
         (pt (cons 0 0)))
     (while (not (equal pt exit))
       (maze-set maze (car pt) (cdr pt) 'visited)
-      ;; (puts "DBG: pt=%s %s\n" pt solution)
-      ;; (dump-maze maze)
       (let ((exits (drop-visited maze (find-exits maze (car pt) (cdr pt)))))
-        ;; (puts "DBG: exits=%s\n" exits)
         (if (null exits)
             (setq pt (pop solution))
           (push pt solution)
@@ -238,5 +190,4 @@
          (solution (solve-maze maze)))
     (print-maze maze solution)))
 
-         
 (provide 'maze)

@@ -15,7 +15,7 @@
          (a (new-maze rows cols))
          b)
   
-    (dig-maze-non-recursive a (random rows) (random cols))
+    (dig-maze a (random rows) (random cols))
     (with-temp-file file-name
       (let ((standard-output (current-buffer)))
         (print-maze a)))
@@ -35,8 +35,39 @@
          b)
 
     ;; (random "start-there")
-    (dig-maze-non-recursive a (random rows) (random cols))
+    (dig-maze a (random rows) (random cols))
     (clear-maze-visited a)
     (print-maze a (solve-maze a))))
 
-(test-solve)
+
+(defun clear-maze-visited (m)
+  (let ((rows (1- (maze-rows m)))
+        (cols (1- (maze-cols m))))
+
+    (dotimes (r rows)
+      (dotimes (c cols)
+        (maze-unset m r c 'visited)))))
+
+(defun test-all ()
+  (let* ((rows 21)
+         (cols 33)
+         (file-name "maze.tmp")
+         (a (new-maze rows cols))
+         b)
+  
+    (dig-maze a (random rows) (random cols))
+    (with-temp-file file-name
+      (let ((standard-output (current-buffer)))
+        (print-maze a)))
+
+    (clear-maze-visited a)
+    (setq b (read-maze file-name))
+
+    (cl-assert (equal a b))
+
+    (print-maze a (solve-maze a))))
+
+(test-all)
+    
+
+
