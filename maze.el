@@ -1,5 +1,9 @@
 (require 'cl-lib)
 
+(defun puts (&rest args)
+  (if args
+      (princ (apply #'format args))))
+
 (cl-defstruct maze rows cols data)
 
 (defmacro maze-pt (w r c)
@@ -40,7 +44,7 @@
 (defun maze-unset (maze r c v)
   (setf (maze-ref maze r c) (delete v (maze-ref maze r c))))
 
-(defun print-maze (maze)
+(defun print-maze (maze &optional marks)
   (dotimes (r (1- (maze-rows maze)))
 
     (dotimes (c (1- (maze-cols maze)))
@@ -49,7 +53,8 @@
     (terpri)
 
     (dotimes (c (1- (maze-cols maze)))
-      (princ (if (maze-is-set maze r c 'wall) "|   " "    ")))
+      (princ (if (maze-is-set maze r c 'wall) "|" " "))
+      (princ (if (member (cons r c) marks) " * " "   ")))
     (princ "|")
     (terpri))
 
@@ -77,17 +82,25 @@
 
     (terpri)))
 
+(defun clear-maze-visited (m)
+  (let ((rows (1- (maze-rows m)))
+        (cols (1- (maze-cols m))))
+
+    (dotimes (r rows)
+      (dotimes (c cols)
+        (maze-unset m r c 'visited)))))
+
 (defun shuffle (lst)
   (sort lst (lambda (a b) (= 1 (random 2)))))
 
 (defun to-visit (maze row col)
-  (let (empty)
+  (let (unvisited)
     (dolist (p '((0 . +1) (0 . -1) (+1 . 0) (-1 . 0)))
       (let ((r (+ row (car p)))
             (c (+ col (cdr p))))
       (unless (maze-is-set maze r c 'visited)
-        (push (cons r c) empty))))
-    (shuffle empty)))
+        (push (cons r c) unvisited))))
+    unvisited))
 
 (defun make-passage (maze r1 c1 r2 c2)
   (if (= r1 r2)
@@ -103,13 +116,13 @@
   (setq max-lisp-eval-depth (* max-lisp-eval-depth 2))
   
   (maze-set maze row col 'visited)
-  (let ((p (to-visit maze row col)))
+  (let ((p (shuffle (to-visit maze row col))))
     (while p
       (let ((r (caar p))
             (c (cdar p)))
         (make-passage maze row col r c)
         (dig-maze-recursive maze r c))
-      (setq p (to-visit maze row col)))))
+      (setq p (shuffle (to-visit maze row col))))))
 
 (defun dig-maze-non-recursive (maze row col)
   (let (backup
@@ -123,7 +136,7 @@
         (setq backup (shuffle backup)))
       (setq row (caar backup)
             col (cdar backup))
-      (let ((p (to-visit maze row col)))
+      (let ((p (shuffle (to-visit maze row col))))
         (if p
             (let ((r (caar p))
                   (c (cdar p)))
@@ -182,34 +195,9 @@
             (maze-unset maze r c 'wall)))))
     maze))
 
-;; (defun solve-maze (maze)
-;;   target
-;;   current 1 1
-;;   set visited
-;;   (let (backup)
-;;     (maze-set maze row col 'visited)
-;;     (push (cons row col) backup)
-;;     (while backup
-;;       (setq run (1+ run))
-;;       (when (> run (/ (+ row col) 3))
-;;         (setq run 0)
-;;         (setq backup (shuffle backup)))
-;;       (setq row (caar backup)
-;;             col (cdar backup))
-;;       (let ((p (to-visit maze row col)))
-;;         (if p
-;;             (let ((r (caar p))
-;;                   (c (cdar p)))
-;;               (make-passage maze row col r c)
-;;               (maze-set maze r c 'visited)
-;;               (push (cons r c) backup))
-;;           (pop backup)
-;;           (setq backup (shuffle backup))
-;;           (setq run 0))))))
-
 (defun solve (file-name)
   (let ((maze (read-maze file-name)))
-    (princ maze)))
+    (print-maze maze)))
 
          
 (provide 'maze)

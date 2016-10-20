@@ -8,30 +8,73 @@
 (require 'maze)
 
 
-(defun clear-maze-visited (m)
-  (let ((rows (1- (maze-rows m)))
-        (cols (1- (maze-cols m))))
-
-    (dotimes (r rows)
-      (dotimes (c cols)
-        (maze-unset m r c 'visited)))))
-
-
-(let* ((rows 12)
-       (cols 24)
-       (file-name "maze.tmp")
-       (a (new-maze rows cols))
-       b)
+(defun test-reader ()
+  (let* ((rows 5)
+         (cols 7)
+         (file-name "maze.tmp")
+         (a (new-maze rows cols))
+         b)
   
-  (dig-maze-non-recursive a (random rows) (random cols))
-  (with-temp-file file-name
-    (let ((standard-output (current-buffer)))
-      (print-maze a)))
+    (dig-maze-non-recursive a (random rows) (random cols))
+    (with-temp-file file-name
+      (let ((standard-output (current-buffer)))
+        (print-maze a)))
 
-  (clear-maze-visited a)
-  (setq b (read-maze file-name))
+    (clear-maze-visited a)
+    (setq b (read-maze file-name))
 
-  (princ (format "(equal a b) %s\n" (equal a b)))
-  (dump-maze a)
-  (dump-maze b))
+    (princ (format "(equal a b) %s\n" (equal a b)))
+    (dump-maze a)
+    (dump-maze b)))
 
+(defun find-exits (maze row col)
+  (let (exits)
+    (dolist (p '((0 . +1) (0 . -1) (-1 . 0) (+1 . 0)))
+      (let ((r (+ row (car p)))
+            (c (+ col (cdr p))))
+        (unless
+            (cond
+             ((equal p '(0 . +1)) (maze-is-set maze r   c   'wall))
+             ((equal p '(0 . -1)) (maze-is-set maze row col 'wall))
+             ((equal p '(+1 . 0)) (maze-is-set maze r   c   'ceiling))
+             ((equal p '(-1 . 0)) (maze-is-set maze row col 'ceiling)))
+          (push (cons r c) exits))))
+    exits))
+
+(defun drop-visited (maze points)
+  (let (not-visited)
+    (while points
+      (unless (maze-is-set maze (caar points) (cdar points) 'visited)
+        (push (car points) not-visited))
+      (pop points))
+    not-visited))
+
+(defun solve-maze (maze)
+  (let (solution
+        (exit (cons (- (maze-rows maze) 2) (- (maze-cols maze) 2)))
+        (pt (cons 0 0)))
+    (while (not (equal pt exit))
+      (maze-set maze (car pt) (cdr pt) 'visited)
+      ;; (puts "DBG: pt=%s %s\n" pt solution)
+      ;; (dump-maze maze)
+      (let ((exits (drop-visited maze (find-exits maze (car pt) (cdr pt)))))
+        ;; (puts "DBG: exits=%s\n" exits)
+        (if (null exits)
+            (setq pt (pop solution))
+          (push pt solution)
+          (setq pt (pop exits)))))
+    (push pt solution)))
+
+(defun test-solve ()
+  (let* ((rows 20)
+         (cols 20)
+         (file-name "maze.tmp")
+         (a (new-maze rows cols))
+         b)
+
+    ;; (random "start-there")
+    (dig-maze-non-recursive a (random rows) (random cols))
+    (clear-maze-visited a)
+    (print-maze a (solve-maze a))))
+
+(test-solve)
