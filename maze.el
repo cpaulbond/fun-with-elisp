@@ -195,9 +195,48 @@
             (maze-unset maze r c 'wall)))))
     maze))
 
+(defun find-exits (maze row col)
+  (let (exits)
+    (dolist (p '((0 . +1) (0 . -1) (-1 . 0) (+1 . 0)))
+      (let ((r (+ row (car p)))
+            (c (+ col (cdr p))))
+        (unless
+            (cond
+             ((equal p '(0 . +1)) (maze-is-set maze r   c   'wall))
+             ((equal p '(0 . -1)) (maze-is-set maze row col 'wall))
+             ((equal p '(+1 . 0)) (maze-is-set maze r   c   'ceiling))
+             ((equal p '(-1 . 0)) (maze-is-set maze row col 'ceiling)))
+          (push (cons r c) exits))))
+    exits))
+
+(defun drop-visited (maze points)
+  (let (not-visited)
+    (while points
+      (unless (maze-is-set maze (caar points) (cdar points) 'visited)
+        (push (car points) not-visited))
+      (pop points))
+    not-visited))
+
+(defun solve-maze (maze)
+  (let (solution
+        (exit (cons (- (maze-rows maze) 2) (- (maze-cols maze) 2)))
+        (pt (cons 0 0)))
+    (while (not (equal pt exit))
+      (maze-set maze (car pt) (cdr pt) 'visited)
+      ;; (puts "DBG: pt=%s %s\n" pt solution)
+      ;; (dump-maze maze)
+      (let ((exits (drop-visited maze (find-exits maze (car pt) (cdr pt)))))
+        ;; (puts "DBG: exits=%s\n" exits)
+        (if (null exits)
+            (setq pt (pop solution))
+          (push pt solution)
+          (setq pt (pop exits)))))
+    (push pt solution)))
+
 (defun solve (file-name)
-  (let ((maze (read-maze file-name)))
-    (print-maze maze)))
+  (let* ((maze (read-maze file-name))
+         (solution (solve-maze maze)))
+    (print-maze maze solution)))
 
          
 (provide 'maze)
