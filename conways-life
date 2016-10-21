@@ -1,6 +1,18 @@
 #!/usr/bin/env emacs -script
-;;; -*- lexical-binding: t -*-
+;; -*- lexical-binding: t -*-
+;; example:
+;;   ./conways-life conways-life.config
 (require 'cl-lib)
+
+(defconst blinker '("***"))
+(defconst toad '(".***" "***."))
+(defconst pentomino-p '(".**" ".**" ".*."))
+(defconst pi-heptomino '("***" "*.*" "*.*"))
+(defconst glider '(".*." "..*" "***"))
+(defconst pre-pulsar '("***...***" "*.*...*.*" "***...***"))
+(defconst ship '("**." "*.*" ".**"))
+(defconst pentadecathalon '("**********"))
+(defconst clock '("..*." "*.*." ".*.*" ".*.."))
 
 (cl-defstruct world rows cols data)
 
@@ -23,6 +35,8 @@
 (defun insert-pattern (world row col shape)
   (let ((r row)
         (c col))
+    (unless (listp shape)
+      (setq shape (symbol-value shape)))
     (dolist (row-data shape)
       (dolist (col-data (mapcar 'identity row-data))
         (setf (world-ref world r c) (not (or (eq col-data ?.))))
@@ -46,34 +60,33 @@
                   (or (= n 2) (= n 3))
                 (= n 3)))))))
 
-(defconst blinker '("***"))
-(defconst toad '(".***" "***."))
-(defconst pentomino-p '(".**" ".**" ".*."))
-(defconst pi-heptomino '("***" "*.*" "*.*"))
-(defconst glider '(".*." "..*" "***"))
-(defconst pre-pulsar '("***...***" "*.*...*.*" "***...***"))
-(defconst ship '("**." "*.*" ".**"))
-(defconst pentadecathalon '("**********"))
-(defconst clock '("..*." "*.*." ".*.*" ".*.."))
+(defun read-config (file-name)
+  (with-temp-buffer
+    (insert-file-contents-literally file-name)
+    (read (current-buffer))))
 
-(let* ((rows 8)
-       (cols 10)
-       (generations 3)
-       (a (new-world rows cols))
-       (b (new-world rows cols)))
-  
-  (insert-pattern a 1 1 blinker)
-  (insert-pattern a 4 4 toad)
-  (dotimes (g generations)
-    (princ (format "generation %d\n" g))
-    (print-world a)
-    (advance-generation a b)
-    (let ((c a)) (setq a b b c))))
+(defun get-cfg (key cfg)
+  (let ((val (assoc key cfg)))
+    (if (null val)
+        (error (format "missing value for %s" key))
+      (cdr val))))
 
+(defun insert-patterns (world patterns)
+  (dolist (p patterns)
+    (apply 'insert-pattern (cons world p))))
 
+(defun simulate-life (file-name)
+  (let* ((cfg (read-config file-name))
+         (rows (get-cfg 'rows cfg))
+         (cols (get-cfg 'cols cfg))
+         (generations (get-cfg 'generations cfg))
+         (a (new-world rows cols))
+         (b (new-world rows cols)))
+    (insert-patterns a (get-cfg 'patterns cfg))
+    (dotimes (g generations)
+      (princ (format "generation %d\n" g))
+      (print-world a)
+      (advance-generation a b)
+      (let ((c a)) (setq a b b c)))))         
 
-
-
-
-      
-         
+(simulate-life (elt command-line-args-left 0))
