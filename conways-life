@@ -1,6 +1,6 @@
 #!/usr/bin/env emacs -script
 ;; -*- lexical-binding: t -*-
-;; example:
+;; run:
 ;;   ./conways-life conways-life.config
 (require 'cl-lib)
 
