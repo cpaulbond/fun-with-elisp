@@ -3,7 +3,10 @@
 ;; run:
 ;;   ./forest-fire forest-fire.config
 (require 'cl-lib)
-(setq debug-on-error t)
+;; (setq debug-on-error t)
+
+(defmacro swap (a b)
+  `(setq ,b (prog1 ,a (setq ,a ,b))))
 
 (defconst burning ?B)
 (defconst tree ?t)
@@ -70,23 +73,23 @@
     (insert-file-contents-literally file-name)
     (read (current-buffer))))
 
-(defun get-cfg (key cfg)
-  (let ((val (assoc key cfg)))
+(defun get-config (key config)
+  (let ((val (assoc key config)))
     (if (null val)
         (error (format "missing value for %s" key))
       (cdr val))))
 
 (defun simulate-forest (file-name)
-  (let* ((cfg (read-config file-name))
-         (rows (get-cfg 'rows cfg))
-         (cols (get-cfg 'cols cfg))
+  (let* ((config (read-config file-name))
+         (rows (get-config 'rows config))
+         (cols (get-config 'cols config))
          (a (new-world rows cols))
          (b (new-world rows cols)))
-    (initialize-world a (get-cfg 'tree cfg))
-    (dotimes (time (get-cfg 'time cfg))
+    (initialize-world a (get-config 'tree config))
+    (dotimes (time (get-config 'time config))
       (princ (format "* time %d\n" time))
       (print-world a)
-      (advance a b (get-cfg 'p cfg) (get-cfg 'f cfg))
-      (let ((c a)) (setq a b b c)))))
+      (advance a b (get-config 'p config) (get-config 'f config))
+      (swap a b))))
 
 (simulate-forest (elt command-line-args-left 0))
